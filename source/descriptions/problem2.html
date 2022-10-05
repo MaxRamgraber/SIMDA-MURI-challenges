@@ -25,8 +25,8 @@
     href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -309,17 +309,29 @@
 \end{split}\end{split}\]</div>
 <p>Using this data, we can then apply further inference, approximation, or model-based methods (see problems 1 and 2) to define a registered ice thickness field <span class="math notranslate nohighlight">\(\tilde{H}:\Gamma\to\mathbb{R}\)</span> over the entire reference configuration <span class="math notranslate nohighlight">\(\Gamma=\Gamma_1\)</span>.</p>
 </section>
-<section id="registration-via-optimal-transport">
-<h2>Registration via Optimal Transport<a class="headerlink" href="#registration-via-optimal-transport" title="Permalink to this headline">#</a></h2>
+<section id="methodology">
+<h2>Methodology<a class="headerlink" href="#methodology" title="Permalink to this headline">#</a></h2>
+<section id="registration-via-optimal-transport-ot">
+<h3>Registration via Optimal Transport (OT)<a class="headerlink" href="#registration-via-optimal-transport-ot" title="Permalink to this headline">#</a></h3>
 <p>We now describe our method for obtaining the map <span class="math notranslate nohighlight">\(T\)</span> used to register the data. As shown by Parno et al. <a class="reference internal" href="#parno2019" id="id1"><span>[Parno2019]</span></a>, optimal transport methods are well-suited for solving sea ice motion estimation and registration problems, and it is this methodology that we follow here. There are, of course, other methods one can consider, such as image registration in the large deformation diffeomorphic metric matching (LDDMM) framework (see, e.g., <a class="reference internal" href="#beg2005" id="id2"><span>[Beg2005]</span></a>), or optical flow algorithms (e.g., <a class="reference internal" href="#petrou2016" id="id3"><span>[Petrou2016]</span></a>), to name only two. Such methods, however, can struggle with the large displacements and topological changes (namely splitting) that are common in sea ice scenarios.</p>
 <p>We refer to <a class="reference internal" href="#parno2019" id="id4"><span>[Parno2019]</span></a> for complete details of the method. Briefly, the idea is this: Suppose we have scalar-valued source and target images <span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(q\)</span>, both of dimension <span class="math notranslate nohighlight">\(N=n\times m\)</span>. After vectorizing and normalizing the images, we can view <span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(q\)</span> as probability mass functions on <span class="math notranslate nohighlight">\(\{1, \dots, N\}\)</span>. A transport plan, or coupling, from <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(q\)</span> is a joint distribution with marginals given by <span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(q\)</span>, and in the discrete setting, a coupling is given by an <span class="math notranslate nohighlight">\(N\times N\)</span> matrix <span class="math notranslate nohighlight">\(\gamma\)</span> whose rows and columns sum to <span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(q\)</span>, respectively. That is,</p>
 <div class="math notranslate nohighlight">
 \[\sum_i\gamma_{ij} = p_i, \hspace{4mm}\text{and } \sum_j\gamma_{ij} = q_j,\]</div>
 <p>where <span class="math notranslate nohighlight">\(p_i\)</span> denotes the <span class="math notranslate nohighlight">\(i\)</span>-th entry of <span class="math notranslate nohighlight">\(p\)</span>, and similarly for <span class="math notranslate nohighlight">\(q\)</span>. To select the plan that rearranges the source mass into the target mass most efficiently, we define a ground cost <span class="math notranslate nohighlight">\(c_{ij}\)</span> that gives the cost of moving a unit of mass from pixel <span class="math notranslate nohighlight">\(i\)</span> to pixel <span class="math notranslate nohighlight">\(j\)</span>. Typically, <span class="math notranslate nohighlight">\(c_{ij}\)</span> is taken as the squared Euclidean distance between the pixel centers. Then, the cost of a transport plan is given by <span class="math notranslate nohighlight">\(\sum_{ij}c_{ij}\gamma_{ij}\)</span>, and the optimal transport problem is to find the transport plan <span class="math notranslate nohighlight">\(\gamma\)</span> with minimum cost.</p>
-<p>Extensive effort has gone into solving optimal transport problems efficiently; see, e.g., <a class="reference internal" href="#peyre2019" id="id5"><span>[Peyre2019]</span></a>. For numerical experiments, we use the solver developed by Zhou and Parno <a class="reference internal" href="#zhou2022" id="id6"><span>[Zhou2022]</span></a>, which can be used for more general multimarginal optimal transport problems. Given the optimal coupling <span class="math notranslate nohighlight">\(\sigma\)</span>, we obtain a transport map <span class="math notranslate nohighlight">\(T\)</span> via the barycentric projection map, as defined in <a class="reference internal" href="#peyre2019" id="id7"><span>[Peyre2019]</span></a>; see <a class="reference internal" href="#parno2019" id="id8"><span>[Parno2019]</span></a> for a quick summary of details.</p>
-<p>We can see the results of this method in the synthetic example shown below:</p>
+<p>Extensive effort has gone into solving optimal transport problems efficiently; see, e.g., <a class="reference internal" href="#peyre2019" id="id5"><span>[Peyre2019]</span></a>. For numerical experiments, we use the solver developed by Zhou and Parno <a class="reference internal" href="#zhou2022" id="id6"><span>[Zhou2022]</span></a>, which can be used for more general multimarginal optimal transport problems without regularization.</p>
+<p>Given the optimal coupling <span class="math notranslate nohighlight">\(\sigma\)</span>, we obtain a transport map <span class="math notranslate nohighlight">\(T\)</span> via the barycentric projection map, as defined in <a class="reference internal" href="#peyre2019" id="id7"><span>[Peyre2019]</span></a>; see <a class="reference internal" href="#parno2019" id="id8"><span>[Parno2019]</span></a> for a quick summary of details. We can see the results of this method in the synthetic example shown below:</p>
 <img alt="../../_images/synthetic1.png" src="../../_images/synthetic1.png" />
 <p>The point in the lower right-hand corner corresponds to a location where we have thickness data available. As can be seen, the transport map accurately tracks the motion of this point as the ice floe undergoes various changes. As such, we can map this and other measurements from the source image into the target image to obtain a registered data set suitable for further processing.</p>
+</section>
+<section id="registration-via-multimarginal-optimal-transport-mmot">
+<h3>Registration via Multimarginal Optimal Transport (MMOT)<a class="headerlink" href="#registration-via-multimarginal-optimal-transport-mmot" title="Permalink to this headline">#</a></h3>
+<p>When we are given a sequential of images:</p>
+<img alt="../../_images/marginal-0-to-4.png" src="../../_images/marginal-0-to-4.png" />
+<p>we are able to use those finer information from the intermediate images to tone the motion, such that images at <span class="math notranslate nohighlight">\(t=0.25\)</span>, <span class="math notranslate nohighlight">\(t=0.5\)</span>, <span class="math notranslate nohighlight">\(t=0.75\)</span> match with <span class="math notranslate nohighlight">\(\mu_1\)</span>, <span class="math notranslate nohighlight">\(\mu_2\)</span>, <span class="math notranslate nohighlight">\(\mu_3\)</span> respectively.</p>
+<img alt="../../_images/interp-bet-0-and-4.png" src="../../_images/interp-bet-0-and-4.png" />
+<img alt="../../_images/interp-bet-0-to-4.png" src="../../_images/interp-bet-0-to-4.png" />
+<p>The top plot is done via the OT interpolation between <span class="math notranslate nohighlight">\(\mu_0\)</span> and <span class="math notranslate nohighlight">\(\mu_4\)</span>. The bottom plot is done via the MMOT interpolation that satisfies all marginals <span class="math notranslate nohighlight">\(\{\mu_i\}_{i=0}^4\)</span>. As the OT-based interpolation follows constant-speed geodesics, the interpolation at <span class="math notranslate nohighlight">\(t=0.125\)</span> for example, may not capture that the motion is slow from marginal <span class="math notranslate nohighlight">\(\mu_0\)</span> at <span class="math notranslate nohighlight">\(t=0.0\)</span> to marginal <span class="math notranslate nohighlight">\(\mu_1\)</span> at <span class="math notranslate nohighlight">\(t=0.25\)</span>. On the opposite, this feature is captured via MMOT interpolation.</p>
+</section>
 </section>
 <section id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this headline">#</a></h2>
@@ -387,9 +399,21 @@
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#registration-via-optimal-transport">
-   Registration via Optimal Transport
+  <a class="reference internal nav-link" href="#methodology">
+   Methodology
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#registration-via-optimal-transport-ot">
+     Registration via Optimal Transport (OT)
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#registration-via-multimarginal-optimal-transport-mmot">
+     Registration via Multimarginal Optimal Transport (MMOT)
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#references">
